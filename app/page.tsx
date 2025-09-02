@@ -8,16 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Search, Menu, User, Heart, MapPin, Bed, Bath, Square, Phone, Mail, Calendar, Home, Car, LogOut, Grid, Map as MapIcon } from "lucide-react"
+import { Search, Menu, User, Heart, MapPin, Bed, Bath, Square, Phone, Mail, Calendar, Home, Car, LogOut } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { useState, useEffect, useRef } from "react"
+import { useState } from "react"
 import { useSession, signOut } from "next-auth/react"
 import Link from "next/link"
-import GoogleMapComponent from "@/components/GoogleMap"
-// import { Map, GoogleApiWrapper, Marker, InfoWindow } from 'google-maps-react'
 
-// Extended property data with coordinates for map
-const allProperties = [
+// Mock property data
+const featuredProperties = [
   {
     id: 1,
     title: "Modern Luxury Villa",
@@ -28,9 +26,7 @@ const allProperties = [
     sqft: "4,200",
     image: "https://ugc.same-assets.com/q9x2j0WuLKoy7YS2Cg901l6v9MNeMAa5.jpeg",
     status: "For Sale",
-    type: "Single Family",
-    latitude: 34.0736,
-    longitude: -118.4004
+    type: "Single Family"
   },
   {
     id: 2,
@@ -42,9 +38,7 @@ const allProperties = [
     sqft: "3,800",
     image: "https://ugc.same-assets.com/JgEsd6gYnCySW6Puie441ijfM8Y_uDfn.jpeg",
     status: "For Sale",
-    type: "Single Family",
-    latitude: 34.0259,
-    longitude: -118.7798
+    type: "Single Family"
   },
   {
     id: 3,
@@ -54,11 +48,9 @@ const allProperties = [
     beds: 6,
     baths: 5,
     sqft: "5,500",
-    image: "https://ugc.same-assets.com/A6XOdnJCN3TJYyIXC8lFPCe0Q7xRf-Ue.jpeg",
+    image: "https://ugc.same-assets.com/d9E0mqJ_y2bSYcSxbjUy-Tt4LMWRp6cO.jpeg",
     status: "For Sale",
-    type: "Single Family",
-    latitude: 34.0522,
-    longitude: -118.2437
+    type: "Single Family"
   },
   {
     id: 4,
@@ -68,11 +60,9 @@ const allProperties = [
     beds: 5,
     baths: 4,
     sqft: "4,800",
-    image: "https://ugc.same-assets.com/A6XOdnJCN3TJYyIXC8lFPCe0Q7xRf-Ue.jpeg",
+    image: "https://ugc.same-assets.com/MXg-nEFmwZbGOKm_RbkqeUESPqnr5pi4.jpeg",
     status: "For Sale",
-    type: "Single Family",
-    latitude: 34.0195,
-    longitude: -118.4912
+    type: "Single Family"
   },
   {
     id: 5,
@@ -82,11 +72,9 @@ const allProperties = [
     beds: 7,
     baths: 6,
     sqft: "6,200",
-    image: "https://ugc.same-assets.com/JgEsd6gYnCySW6Puie441ijfM8Y_uDfn.jpeg",
+    image: "https://ugc.same-assets.com/y2x6N3IzOb72NCCSYcGnvQjvLWMxJjiF.jpeg",
     status: "For Sale",
-    type: "Single Family",
-    latitude: 33.8847,
-    longitude: -118.4109
+    type: "Single Family"
   },
   {
     id: 6,
@@ -96,231 +84,16 @@ const allProperties = [
     beds: 6,
     baths: 5,
     sqft: "5,800",
-    image: "https://ugc.same-assets.com/q9x2j0WuLKoy7YS2Cg901l6v9MNeMAa5.jpeg",
+    image: "https://ugc.same-assets.com/zdPxllhImvqTKB11I9XM9d0Jm4651_sI.jpeg",
     status: "For Sale",
-    type: "Single Family",
-    latitude: 34.1478,
-    longitude: -118.1445
-  },
-  {
-    id: 7,
-    title: "Ocean View Villa",
-    price: "$5,250,000",
-    location: "Redondo Beach, CA",
-    beds: 5,
-    baths: 4,
-    sqft: "4,500",
-    image: "https://ugc.same-assets.com/A6XOdnJCN3TJYyIXC8lFPCe0Q7xRf-Ue.jpeg",
-    status: "For Sale",
-    type: "Single Family",
-    latitude: 33.8492,
-    longitude: -118.3892
-  },
-  {
-    id: 8,
-    title: "Modern Penthouse",
-    price: "$2,750,000",
-    location: "West Hollywood, CA",
-    beds: 3,
-    baths: 3,
-    sqft: "2,800",
-    image: "https://ugc.same-assets.com/JgEsd6gYnCySW6Puie441ijfM8Y_uDfn.jpeg",
-    status: "For Sale",
-    type: "Condo",
-    latitude: 34.0900,
-    longitude: -118.3617
+    type: "Single Family"
   }
 ]
 
-// Mock property data
-const featuredProperties = allProperties.slice(0, 6)
-
-// Google Maps component
-const GoogleMapComponent = ({ google, properties, onPropertySelect }: any) => {
-  const [selectedMarker, setSelectedMarker] = useState<any>(null);
-  const [showingInfoWindow, setShowingInfoWindow] = useState(false);
-
-  const onMarkerClick = (props: any, marker: any) => {
-    const property = properties.find((p: any) => p.id === props.id);
-    setSelectedMarker(marker);
-    setShowingInfoWindow(true);
-    onPropertySelect(property);
-  };
-
-  const onInfoWindowClose = () => {
-    setShowingInfoWindow(false);
-    setSelectedMarker(null);
-    onPropertySelect(null);
-  };
-
-  const mapStyles = [
-    {
-      featureType: 'poi',
-      elementType: 'labels',
-      stylers: [{ visibility: 'off' }]
-    }
-  ];
-
-  return (
-    <div style={{ width: '100%', height: '600px', position: 'relative' }}>
-      <Map
-        google={google}
-        zoom={9}
-        initialCenter={{ lat: 34.0522, lng: -118.2437 }}
-        styles={mapStyles}
-        style={{ width: '100%', height: '100%' }}
-      >
-        {properties.map((property: any) => (
-          <Marker
-            key={property.id}
-            id={property.id}
-            position={{ lat: property.latitude, lng: property.longitude }}
-            onClick={onMarkerClick}
-            icon={{
-              path: google.maps.SymbolPath.CIRCLE,
-              fillColor: '#2563eb',
-              fillOpacity: 1,
-              strokeColor: '#ffffff',
-              strokeWeight: 2,
-              scale: 8,
-            }}
-            title={property.title}
-          />
-        ))}
-
-        <InfoWindow
-          marker={selectedMarker}
-          visible={showingInfoWindow}
-          onClose={onInfoWindowClose}
-        >
-          <div style={{ maxWidth: '300px', padding: '8px' }}>
-            {selectedMarker && (() => {
-              const property = properties.find((p: any) => p.id === selectedMarker.id);
-              if (!property) return null;
-              
-              return (
-                <>
-                  <img
-                    src={property.image}
-                    alt={property.title}
-                    style={{
-                      width: '100%',
-                      height: '120px',
-                      objectFit: 'cover',
-                      borderRadius: '8px',
-                      marginBottom: '8px'
-                    }}
-                  />
-                  <div style={{
-                    color: '#2563eb',
-                    fontSize: '18px',
-                    fontWeight: 'bold',
-                    marginBottom: '4px'
-                  }}>
-                    {property.price}
-                  </div>
-                  <div style={{
-                    fontWeight: '600',
-                    marginBottom: '4px'
-                  }}>
-                    {property.title}
-                  </div>
-                  <div style={{
-                    color: '#6b7280',
-                    fontSize: '14px',
-                    marginBottom: '8px',
-                    display: 'flex',
-                    alignItems: 'center'
-                  }}>
-                    <span style={{ marginRight: '4px' }}>📍</span>
-                    {property.location}
-                  </div>
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    color: '#6b7280',
-                    fontSize: '14px',
-                    marginBottom: '12px'
-                  }}>
-                    <span>🛏️ {property.beds} beds</span>
-                    <span>🛁 {property.baths} baths</span>
-                    <span>📐 {property.sqft} sqft</span>
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button
-                      onClick={() => alert(`View Details clicked for ${property.title}`)}
-                      style={{
-                        flex: 1,
-                        background: '#2563eb',
-                        color: 'white',
-                        border: 'none',
-                        padding: '8px 12px',
-                        borderRadius: '6px',
-                        fontSize: '14px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      View Details
-                    </button>
-                    <button
-                      onClick={() => alert(`Save clicked for ${property.title}`)}
-                      style={{
-                        background: 'white',
-                        border: '1px solid #d1d5db',
-                        padding: '8px 12px',
-                        borderRadius: '6px',
-                        fontSize: '14px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      ❤️ Save
-                    </button>
-                  </div>
-                </>
-              );
-            })()}
-          </div>
-        </InfoWindow>
-      </Map>
-    </div>
-  );
-};
-
-// Wrap the map component with GoogleApiWrapper
-const MapContainer = GoogleApiWrapper({
-  apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-  LoadingContainer: () => (
-    <div style={{
-      width: '100%',
-      height: '600px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: '#f3f4f6',
-      borderRadius: '8px'
-    }}>
-      <div style={{ textAlign: 'center', padding: '32px' }}>
-        <div style={{
-          width: '32px',
-          height: '32px',
-          border: '2px solid #2563eb',
-          borderTop: 'transparent',
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite',
-          margin: '0 auto 16px'
-        }}></div>
-        <div style={{ color: '#374151', fontWeight: '500' }}>Loading Google Maps...</div>
-      </div>
-    </div>
-  )
-})(GoogleMapComponent);
-
 export default function HomePage() {
   const [selectedProperty, setSelectedProperty] = useState(null)
-  const [viewType, setViewType] = useState('grid')
   const { data: session, status } = useSession()
   console.log("!!!session:", session, "status:", status)
-  
   const handleSignOut = async () => {
     await signOut({ callbackUrl: "/" })
   }
@@ -556,157 +329,6 @@ export default function HomePage() {
               </Select>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Explore Properties - Grid/Map Toggle */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-                Explore Properties
-              </h2>
-              <p className="text-lg text-gray-600">
-                Browse all available properties in our listings
-              </p>
-            </div>
-
-            {/* Toggle Switch */}
-            <div className="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
-              <Button
-                variant={viewType === 'grid' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewType('grid')}
-                className="flex items-center gap-2"
-              >
-                <Grid className="h-4 w-4" />
-                Grid
-              </Button>
-              <Button
-                variant={viewType === 'map' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewType('map')}
-                className="flex items-center gap-2"
-              >
-                <MapIcon className="h-4 w-4" />
-                Map
-              </Button>
-            </div>
-          </div>
-
-          {/* Grid View */}
-          {viewType === 'grid' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {allProperties.map((property) => (
-                <Dialog key={property.id}>
-                  <DialogTrigger asChild>
-                    <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer hover:scale-105">
-                      <div className="relative">
-                        <img
-                          src={property.image}
-                          alt={property.title}
-                          className="w-full h-48 object-cover"
-                        />
-                        <Badge className="absolute top-3 left-3 bg-blue-600">
-                          {property.status}
-                        </Badge>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="absolute top-3 right-3 h-8 w-8 p-0 bg-white/80 hover:bg-white"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Heart className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <CardContent className="p-4">
-                        <div className="mb-2">
-                          <div className="text-xl font-bold text-blue-600 mb-1">
-                            {property.price}
-                          </div>
-                          <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                            {property.title}
-                          </h3>
-                          <div className="flex items-center text-gray-600 text-sm mb-2">
-                            <MapPin className="h-4 w-4 mr-1" />
-                            {property.location}
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between text-sm text-gray-600">
-                          <div className="flex items-center">
-                            <Bed className="h-4 w-4 mr-1" />
-                            {property.beds} beds
-                          </div>
-                          <div className="flex items-center">
-                            <Bath className="h-4 w-4 mr-1" />
-                            {property.baths} baths
-                          </div>
-                          <div className="flex items-center">
-                            <Square className="h-4 w-4 mr-1" />
-                            {property.sqft} sqft
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>{property.title}</DialogTitle>
-                      <DialogDescription>
-                        {property.location} • {property.type}
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <img
-                          src={property.image}
-                          alt={property.title}
-                          className="w-full h-80 object-cover rounded-lg"
-                        />
-                      </div>
-                      <div>
-                        <div className="text-3xl font-bold text-blue-600 mb-4">
-                          {property.price}
-                        </div>
-                        <div className="mb-6">
-                          <h4 className="text-lg font-semibold mb-3">Description</h4>
-                          <p className="text-gray-600 leading-relaxed">
-                            This stunning {property.title.toLowerCase()} offers luxurious living with modern amenities and breathtaking views.
-                            Featuring high-end finishes, spacious layouts, and premium materials throughout.
-                            Perfect for those seeking elegance and comfort in a prime location.
-                          </p>
-                        </div>
-                        <div className="space-y-3">
-                          <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                            Schedule a Tour
-                          </Button>
-                          <Button variant="outline" className="w-full">
-                            Contact Agent
-                          </Button>
-                          <Button variant="outline" className="w-full">
-                            <Heart className="h-4 w-4 mr-2" />
-                            Save Property
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              ))}
-            </div>
-          )}
-
-          {/* Google Maps View */}
-          {viewType === 'map' && (
-            <div className="h-[600px] rounded-lg overflow-hidden border border-gray-200">
-              <GoogleMapComponent
-                properties={allProperties}
-                onPropertySelect={setSelectedProperty}
-                selectedProperty={selectedProperty}
-              />
-            </div>
-          )}
         </div>
       </section>
 
